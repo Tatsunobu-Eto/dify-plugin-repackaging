@@ -1,148 +1,106 @@
-## Dify 1.0 Plugin Downloading and Repackaging
-### How To Use With Github Action
-1. Fork this repository
-2. Open the GitHub page of your forked repository
-[https://github.com/{your_username}/dify-sandbox-python-requirements-download]()
-3. Run workflow
-![run_github_action_1](images/run_github_action_1.png)
-![run_github_action_2](images/run_github_action_2.png)
-4. Download artifact
-![run_github_action_3](images/run_github_action_3.png)
+# Dify 1.0 プラグインのダウンロードと再パッケージング（オフライン化）
 
-### How To Use With Docker
+このツールは、Dify Marketplace や GitHub からプラグイン（.difypkg）をダウンロードし、依存する Python パッケージ（wheels）を同梱してオフライン環境でもインストール可能な形式に再パッケージングするためのものです。
 
-1.change param in dockerfile
+---
 
-```dockerfile
-CMD ["./plugin_repackaging.sh", "-p", "manylinux_2_17_x86_64", "market", "antv", "visualization", "0.1.7"] 
-```
+### 1. GitHub Actions での使用方法（推奨）
 
-2.build
-```bash
-docker build -t dify-plugin-repackaging .
-```
+最も簡単な方法です。自分の GitHub アカウントで実行できます。
 
+1. このリポジトリを **Fork** する
+2. Fork したリポジトリの **Actions** タブを開く
+3. **Repackage Dify Plugin** ワークフローを選択し、**Run workflow** をクリック
+   - `plugin author`: プラグインの作者名（例: `langgenius`）
+   - `plugin name`: プラグイン名（例: `agent`）
+   - `plugin version`: バージョン（例: `0.0.9`）
+   - `Use ARM platform`: ARM版（aarch64）が必要な場合は `true`
+4. 完了後、**Artifacts** セクションから生成されたファイルをダウンロードする
 
-3.run
+---
 
-linux
-```bash
-docker run -v $(pwd):/app dify-plugin-repackaging
-```
-windows
-```cmd
-docker run -v %cd%:/app dify-plugin-repackaging
-```
-4.override CMD(opt)
+### 2. Docker での使用方法
 
-linux
-```bash
-docker run -v $(pwd):/app dify-plugin-repackaging ./plugin_repackaging.sh -p manylinux_2_17_x86_64 market antv visualization 0.1.7
-```
+1. **Dockerfile の CMD を編集**
+   実行したいプラグインの情報に合わせて引数を変更します。
+   ```dockerfile
+   CMD ["./plugin_repackaging.sh", "-p", "manylinux_2_17_x86_64", "market", "antv", "visualization", "0.1.7"] 
+   ```
 
-### Prerequisites
+2. **イメージのビルド**
+   ```bash
+   docker build -t dify-plugin-repackaging .
+   ```
 
-Operating System: Linux amd64/aarch64, MacOS x86_64/arm64
+3. **実行（Windows の例）**
+   カレントディレクトリに成果物が出力されます。
+   ```cmd
+   docker run -v %cd%:/app dify-plugin-repackaging
+   ```
 
-**Notes**: The script uses `yum` to install `unzip` which is only avialable on RPM-based Linux systems(such as `Red Hat Enterprise Linux`, `CentOS`, `Fedora`, and `Oracle Linux`), and is now replaced by `dnf` in latest version. To use the script on other distributions, please install `unzip` command in advance.
+---
 
-**注意：**本脚本使用`yum`安装`unzip`命令，这只适用于基于RPM的Linux系统（如`Red Hat Enterprise Linux`, `CentOS`, `Fedora`, and `Oracle Linux`）。并且在较新的分发版中，它已被`dnf`所替代。
-因此，当使用其他Linux分发版或者无法使用`yum`时，请事先安装`unzip`命令。
+### 3. 前提条件と環境
 
-Python version: Should be as the same as the version in `dify-plugin-daemon` which is currently 3.12.x
+- **OS**: Linux (amd64/aarch64), MacOS (x86_64/arm64)
+- **依存関係**: `unzip` コマンドが必要です。
+  - スクリプト内で `yum` を使用してインストールを試みますが、それ以外のディストリビューション（Ubuntu等）では、あらかじめ `sudo apt install unzip` などでインストールしておいてください。
+- **Python**: Dify プラグインランタイムと合わせるため、**3.12.x** を推奨します。
 
-
-#### Clone
+#### クローン
 ```shell
-git clone https://github.com/junjiem/dify-plugin-repackaging.git
+git clone https://github.com/Tatsunobu-Eto/dify-plugin-repackaging.git
 ```
 
+---
 
+### 4. 主な機能と使い方の詳細
 
-### Description
-
-#### From the Dify Marketplace downloading and repackaging
-
-![market](images/market.png)
-
-##### Example
-
-![market-example](images/market-example.png)
-
+#### Dify Marketplace からの再パッケージング
+Marketplace で公開されているプラグインを指定してオフライン化します。
 ```shell
-./plugin_repackaging.sh market langgenius agent 0.0.9
+./plugin_repackaging.sh market {作者名} {プラグイン名} {バージョン}
 ```
+例: `./plugin_repackaging.sh market langgenius agent 0.0.9`
 
-![langgenius-agent](images/langgenius-agent.png)
-
-
-
-#### From the Github downloading and repackaging
-
-![github](images/github.png)
-
-##### Example
-
-![github-example](images/github-example.png)
-
+#### GitHub からの再パッケージング
+GitHub の Releases に公開されている `.difypkg` を指定してオフライン化します。
 ```shell
-./plugin_repackaging.sh github junjiem/dify-plugin-agent-mcp_sse 0.0.1 agent-mcp_see.difypkg
+./plugin_repackaging.sh github {リポジトリ名} {リリース名} {ファイル名.difypkg}
 ```
+例: `./plugin_repackaging.sh github junjiem/dify-plugin-agent-mcp_sse 0.0.1 agent-mcp_see.difypkg`
 
-![junjiem-mcp_sse](images/junjiem-mcp_sse.png)
-
-
-
-#### Local Dify package repackaging
-
-![local](images/local.png)
-
-##### Example
-
+#### 手元の .difypkg ファイルを再パッケージング
+すでにローカルにあるファイルを展開し、依存関係を同梱します。
 ```shell
 ./plugin_repackaging.sh local ./db_query.difypkg
 ```
 
-![db_query](images/db_query.png)
+#### クロスプラットフォーム対応（`-p` オプション）
+実行環境と異なるプラットフォーム（OS/CPU）向けに作成する場合、`-p` で pip のプラットフォーム文字列を指定します。
+- **x86_64/amd64**: `manylinux2014_x86_64` または `manylinux_2_17_x86_64`
+- **arm64/aarch64**: `manylinux2014_aarch64` または `manylinux_2_17_aarch64`
 
-#### Platform Crossing Repacking
+---
 
-For repacking the plugins in different platforms between operating and running environment, 
-please using `-p` option with a pip platform string.
+### 5. Dify プラットフォーム側の設定（重要）
 
-Typically, uses `manylinux2014_x86_64` for plugins running on an `x86_64/amd64` OS, 
-and `manylinux2014_aarch64` for `aarch64/arm64`.
+自作や未審査のプラグインをインストールしたり、大容量のパッケージを扱うために Dify の `.env` を更新する必要があります。
 
-### Update Dify platform env  Dify平台放开限制
+- **署名検証の解除**: `FORCE_VERIFYING_SIGNATURE=false`
+  - これにより、Marketplace 未掲載のカスタムプラグインのインストールが可能になります。
+- **最大サイズ制限の拡張**: `PLUGIN_MAX_PACKAGE_SIZE=524288000` (500MB)
+- **Nginx のアップロード制限**: `NGINX_CLIENT_MAX_BODY_SIZE=500M`
 
-- your .env configuration file: Change `FORCE_VERIFYING_SIGNATURE` to `false` , the Dify platform will allow the installation of all plugins that are not listed in the Dify Marketplace.
+---
 
-- your .env configuration file: Change `PLUGIN_MAX_PACKAGE_SIZE` to `524288000` , and the Dify platform will allow the installation of plug-ins within 500M.
+### 6. プラグインのインストール
 
-- your .env configuration file: Change `NGINX_CLIENT_MAX_BODY_SIZE` to `500M` , and the Nginx client will allow uploading content up to 500M in size.
-
-
-
-- 在 .env 配置文件将 `FORCE_VERIFYING_SIGNATURE` 改为 `false` ，Dify 平台将允许安装所有未在 Dify Marketplace 上架（审核）的插件。
-
-- 在 .env 配置文件将 `PLUGIN_MAX_PACKAGE_SIZE` 增大为 `524288000`，Dify 平台将允许安装 500M 大小以内的插件。
-
-- 在 .env 配置文件将 `NGINX_CLIENT_MAX_BODY_SIZE` 增大为 `500M`，Nginx客户端将允许上传 500M 大小以内的内容。
-
-
-
-
-### Installing Plugins via Local 通过本地安装插件
-
-Visit the Dify platform's plugin management page, choose Local Package File to complete installation.
-
-访问 Dify 平台的插件管理页，选择通过本地插件完成安装。
+Dify のプラグイン管理ページから「ローカルパッケージファイル（Local Package File）」を選択し、生成された `*-offline.difypkg` をアップロードして完了です。
 
 ![install_plugin_via_local](./images/install_plugin_via_local.png)
 
+---
 
-
-### Star history
-
-[![Star History Chart](https://api.star-history.com/svg?repos=junjiem/dify-plugin-repackaging&type=Date)](https://star-history.com/#junjiem/dify-plugin-repackaging&Date)
-
+### ライセンス・履歴
+[Star History Chart](https://star-history.com/#junjiem/dify-plugin-repackaging&Date)
