@@ -291,17 +291,8 @@ PY
 
 	if [ -f "pyproject.toml" ] && [ ! -f "requirements.txt" ]; then
 		if command -v uv &> /dev/null; then
-			echo "Generating uv.lock file..."
-			uv lock ${UV_PLATFORM:+--python-platform ${UV_PLATFORM}} \
-				--python-version "${UV_PY_VERSION}" ${UV_PRERELEASE_FLAG}
-			if [[ $? -ne 0 ]]; then
-				echo "✗ Error: uv lock failed"
-				exit 1
-			fi
-			echo "✓ uv.lock generated successfully"
-
-			echo "Exporting requirements.txt from uv.lock..."
-			uv export --format requirements-txt -o requirements.txt \
+			echo "Exporting requirements.txt using uv..."
+			uv export --no-dev --no-editable --format requirements-txt -o requirements.txt \
 				${UV_PLATFORM:+--python-platform ${UV_PLATFORM}} \
 				--python-version "${UV_PY_VERSION}" ${UV_PRERELEASE_FLAG}
 			if [[ $? -ne 0 ]]; then
