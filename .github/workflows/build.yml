@@ -19,6 +19,12 @@ on:
         description: "Use ARM platform (true = manylinux_2_17_aarch64, false = manylinux_2_17_x86_64)"
         required: true
         default: "false"
+        type: boolean
+      allow_prerelease:
+        description: "Allow pre-release versions (-R flag)"
+        required: true
+        default: false
+        type: boolean
 
 jobs:
   repackage:
@@ -28,8 +34,9 @@ jobs:
         run: |
           echo "plugin_author  = ${{ inputs.plugin_author }}"
           echo "plugin_name    = ${{ inputs.plugin_name }}"
-          echo "plugin_version = ${{ inputs.plugin_version }}"
-          echo "platform_arm   = ${{ inputs.platform_arm }}"
+          echo "plugin_version    = ${{ inputs.plugin_version }}"
+          echo "platform_arm      = ${{ inputs.platform_arm }}"
+          echo "allow_prerelease  = ${{ inputs.allow_prerelease }}"
 
       - name: Resolve platform
         run: |
@@ -56,6 +63,7 @@ jobs:
         run: |
           PIP_MIRROR_URL=https://pypi.org/simple \
           ./plugin_repackaging.sh \
+          ${{ inputs.allow_prerelease == true && '-R' || '' }} \
           -p ${{ env.PIP_PLATFORM }} \
           -s ${{ env.PACKAGE_SUFFIX }} \
           market \
